@@ -35,12 +35,15 @@ jobs:
 
       - name: Deploys with docker compose
         run: |
-          # --remove-orphans cleans up services removed from the yaml
+          # 1. Pull the latest images defined in your yaml
+          docker compose pull
+          
+          # 2. Shut down and remove orphans
           docker compose down --remove-orphans
-          # --pull ensures you have the latest base images
-          docker compose build --pull
-          # --force-recreate ensures containers are restarted with new code/env
-          docker compose up -d --force-recreate
+          
+          # 3. Build and Start
+          # -d runs in background, --build ensures local changes are baked in
+          docker compose up -d --build --force-recreate
 
       - name: Verify that containers are running
         run: |
