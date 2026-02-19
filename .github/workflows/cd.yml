@@ -13,13 +13,11 @@ jobs:
       - name: Checkout depot
         uses: actions/checkout@v4
         with:
-          # Using clean: true is generally safer to avoid leftover artifacts
-          clean: true 
+          clean: false
 
       - name: Creates .env file
         run: |
-          # Quoting 'EOF' prevents shell expansion of secrets
-          cat > .env << 'EOF'
+          cat > .env << EOF
           DB_HOST=${{ secrets.DB_HOST }}
           DB_PORT=${{ secrets.DB_PORT }}
           DB_NAME=${{ secrets.MYSQL_DB_NAME }}
@@ -31,22 +29,13 @@ jobs:
           EOF
 
       - name: Creates docker network
-        run: docker network create labo03-network || true
+        run: docker network create labo04-network || true
 
-      - name: Deploys with docker compose
+      - name: Deploys with docker-compose
         run: |
-          # 1. Pull the latest images defined in your yaml
-          docker compose pull
-          
-          # 2. Shut down and remove orphans
-          docker compose down --remove-orphans
-          
-          # 3. Build and Start
-          # -d runs in background, --build ensures local changes are baked in
-          docker compose up -d --build --force-recreate
+          docker-compose down -v
+          docker-compose build
+          docker-compose up -d 
 
       - name: Verify that containers are running
-        run: |
-          docker ps
-          sleep 5
-          docker compose ps
+        run: docker ps
