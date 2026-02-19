@@ -13,11 +13,13 @@ jobs:
       - name: Checkout depot
         uses: actions/checkout@v4
         with:
-          clean: false
+          # Using clean: true is generally safer to avoid leftover artifacts
+          clean: true 
 
       - name: Creates .env file
         run: |
-          cat > .env << EOF
+          # Quoting 'EOF' prevents shell expansion of secrets
+          cat > .env << 'EOF'
           DB_HOST=${{ secrets.DB_HOST }}
           DB_PORT=${{ secrets.DB_PORT }}
           DB_NAME=${{ secrets.MYSQL_DB_NAME }}
@@ -31,11 +33,17 @@ jobs:
       - name: Creates docker network
         run: docker network create labo03-network || true
 
-      - name: Deploys with docker-compose
+      - name: Deploys with docker compose
         run: |
-          docker-compose down
-          docker-compose build
-          docker-compose up -d 
+          # --remove-orphans cleans up services removed from the yaml
+          docker compose down --remove-orphans
+          # --pull ensures you have the latest base images
+          docker compose build --pull
+          # --force-recreate ensures containers are restarted with new code/env
+          docker compose up -d --force-recreate
 
       - name: Verify that containers are running
-        run: docker ps
+        run: |
+          docker ps
+          sleep 5
+          docker compose ps
