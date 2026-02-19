@@ -24,12 +24,19 @@ def add_order(user_id: int, items: list):
 
     try:
         start_time = time.time()
-        # TODO: optimiser
         product_prices = {}
         products = session.query(Product).filter(Product.id.in_(product_ids)).all()
-        for product in products:
-            product_prices[product.id] = product.price
-            
+
+        if len(products) != len(set(product_ids)):
+            # Find which one is missing for the error message
+            found_ids = {p.id for p in products}
+            missing = set(product_ids) - found_ids
+            raise ValueError(f"Product IDs {missing} not found in database.")
+
+        product_prices = {p.id: p.price for p in products}
+        # for product in products:
+        #     product_prices[product.id] = product.price
+
         total_amount = 0
         order_items = []
         
